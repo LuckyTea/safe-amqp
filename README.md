@@ -1,9 +1,10 @@
 # amqp-safe
+
 Golang AMQP with reconnect, clustering and delivery guarantee.
 
 ```go
 import (
-	amqp "github.com/xssnick/amqp-safe"
+    amqp "github.com/luckytea/safe-amqp"
 )
 
 // Start connection and open channel, async

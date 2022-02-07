@@ -10,13 +10,15 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var ErrServerNAck = errors.New("not ack by server")
-var ErrServerReturn = errors.New("returned by server")
-var ErrNoConnection = errors.New("not connected")
-var ErrNoChannel = errors.New("no channel")
+var (
+	ErrServerNAck   = errors.New("not ack by server")
+	ErrServerReturn = errors.New("returned by server")
+	ErrNoConnection = errors.New("not connected")
+	ErrNoChannel    = errors.New("no channel")
+)
 
 type Logger interface {
 	Println(v ...interface{})

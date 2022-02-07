@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	amqp "github.com/xssnick/amqp-safe"
+	amqp "github.com/luckytea/safe-amqp"
 )
 
 func main() {

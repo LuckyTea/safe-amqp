@@ -1,7 +1,7 @@
 package amqp_safe
 
 import (
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const (
@@ -11,10 +11,12 @@ const (
 	ExchangeHeaders = "headers"
 )
 
-type Delivery = amqp.Delivery
-type Table = amqp.Table
-type Queue = amqp.Queue
-type Publishing = amqp.Publishing
+type (
+	Delivery   = amqp.Delivery
+	Table      = amqp.Table
+	Queue      = amqp.Queue
+	Publishing = amqp.Publishing
+)
 
 func (c *Connector) QueueBind(name, key, exchange string, noWait bool, args Table) error {
 	sch := c.ch

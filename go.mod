@@ -1,5 +1,5 @@
-module github.com/xssnick/amqp-safe
+module github.com/luckytea/safe-amqp
 
-go 1.13
+go 1.17
 
-require github.com/streadway/amqp v1.0.0
+require github.com/rabbitmq/amqp091-go v1.3.0
