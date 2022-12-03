@@ -1,6 +1,12 @@
 package amqp_safe
 
+import "context"
+
 func (c *Connector) Publish(exchange, key string, publishing Publishing) error {
+	return c.PublishWithContext(context.Background(), exchange, key, publishing)
+}
+
+func (c *Connector) PublishWithContext(ctx context.Context, exchange, key string, publishing Publishing) error {
 	c.wg.Add(1)
 	defer c.wg.Done()
 
@@ -12,7 +18,7 @@ func (c *Connector) Publish(exchange, key string, publishing Publishing) error {
 		return ErrNoChannel
 	}
 
-	err := sch.Publish(exchange, key, true, false, publishing)
+	err := sch.PublishWithContext(ctx, exchange, key, true, false, publishing)
 	if err != nil {
 		return err
 	}
