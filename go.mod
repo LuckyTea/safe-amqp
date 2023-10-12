@@ -1,5 +1,5 @@
 module github.com/luckytea/safe-amqp
 
-go 1.19
+go 1.21.3
 
-require github.com/rabbitmq/amqp091-go v1.5.0
+require github.com/rabbitmq/amqp091-go v1.9.0
