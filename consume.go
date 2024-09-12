@@ -6,9 +6,11 @@ import (
 
 type Result int
 
-const ResultOK Result = 1
-const ResultError Result = 2
-const ResultReject Result = 3
+const (
+	ResultOK     Result = 1
+	ResultError  Result = 2
+	ResultReject Result = 3
+)
 
 type Acker struct {
 	d Delivery
@@ -51,13 +53,13 @@ func (c *Connector) Consume(queue, consumer string, cb func([]byte) Result) {
 				case ResultOK:
 					err = ev.Ack(false)
 				case ResultError:
-					err = ev.Nack(false,true)
+					err = ev.Nack(false, true)
 				case ResultReject:
-					err = ev.Nack(false,false)
+					err = ev.Nack(false, false)
 				}
 
 				if err != nil {
-					c.cfg.Logger.Println("[ack/nack] failed, error:", err)
+					c.cfg.Logger.Println("ERR [ack/nack] failed, error:", err)
 				}
 			}
 		}

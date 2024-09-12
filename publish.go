@@ -25,18 +25,18 @@ func (c *Connector) PublishWithContext(ctx context.Context, exchange, key string
 
 	select {
 	case ret := <-c.returns:
-		c.cfg.Logger.Println("[publish] message returned with err:", ret.ReplyText)
+		c.cfg.Logger.Println("ERR [publish] message returned with err:", ret.ReplyText)
 
 		ack := <-c.confirms
 		if !ack.Ack {
-			c.cfg.Logger.Println("[publish] message confirm nack after return")
+			c.cfg.Logger.Println("INF [publish] message confirm nack after return")
 			return ErrServerNAck
 		}
 
 		return ErrServerReturn
 	case cnf := <-c.confirms:
 		if !cnf.Ack {
-			c.cfg.Logger.Println("[publish] message confirm nack")
+			c.cfg.Logger.Println("INF [publish] message confirm nack")
 
 			return ErrServerNAck
 		}

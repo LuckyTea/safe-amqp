@@ -13,13 +13,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var (
-	ErrServerNAck   = errors.New("not ack by server")
-	ErrServerReturn = errors.New("returned by server")
-	ErrNoConnection = errors.New("not connected")
-	ErrNoChannel    = errors.New("no channel")
-)
-
 type Logger interface {
 	Println(v ...interface{})
 }
@@ -55,6 +48,30 @@ type Connector struct {
 	cfg Config
 }
 
+func NewConnector(cfg Config) *Connector {
+	if cfg.Logger == nil {
+		cfg.Logger = log.New(os.Stdout, "[amqp-safe]", 0)
+	}
+
+	if cfg.DialTimeout == 0 {
+		cfg.DialTimeout = 3 * time.Second
+	}
+
+	if cfg.HeartbeatEvery == 0 {
+		cfg.HeartbeatEvery = 3 * time.Second
+	}
+
+	if cfg.RetryEvery == 0 {
+		cfg.RetryEvery = 1 * time.Second
+	}
+
+	if len(cfg.Hosts) == 0 {
+		panic("no amqp hosts specified")
+	}
+
+	return &Connector{cfg: cfg, onReady: func() {}}
+}
+
 func (c *Connector) Close() (err error) {
 	atomic.StoreInt32(&c.closed, 1)
 
@@ -86,7 +103,7 @@ func (c *Connector) startChannel() {
 			break
 		}
 
-		c.cfg.Logger.Println("[channel] failed to start:", err)
+		c.cfg.Logger.Println("ERR [channel] failed to start:", err)
 		time.Sleep(c.cfg.RetryEvery)
 	}
 }
@@ -106,9 +123,9 @@ func (c *Connector) startConnection() {
 
 		u, uerr := url.Parse(host)
 		if uerr != nil {
-			c.cfg.Logger.Println("[connection] failed to start with (corrupted url) err:", err, c.iter, uerr)
+			c.cfg.Logger.Println("ERR [connection] failed to start with (corrupted url) err:", err, c.iter, uerr)
 		} else {
-			c.cfg.Logger.Println("[connection] failed to start with", u.Host, "err:", err, c.iter)
+			c.cfg.Logger.Println("ERR [connection] failed to start with", u.Host, "err:", err, c.iter)
 		}
 
 		time.Sleep(c.cfg.RetryEvery)
@@ -145,20 +162,20 @@ func (c *Connector) initConnection(url string) error {
 			atomic.SwapPointer((*unsafe.Pointer)((unsafe.Pointer)(&c.con)), unsafe.Pointer(nil))
 
 			if e != nil {
-				c.cfg.Logger.Println("[recreate] got connection close with error:", e.Reason)
+				c.cfg.Logger.Println("ERR [recreate] got connection close with error:", e.Reason)
 				for {
 					c.iter++
 					err := c.initConnection(c.cfg.Hosts[c.iter%len(c.cfg.Hosts)])
 					if err != nil {
-						c.cfg.Logger.Println("[recreate] connection not recreated, will retry...")
+						c.cfg.Logger.Println("ERR [recreate] connection not recreated, will retry...", err)
 						time.Sleep(c.cfg.RetryEvery)
 						continue
 					}
-					c.cfg.Logger.Println("[recreate] connection successfully recreated!")
+					c.cfg.Logger.Println("INF [recreate] connection successfully recreated!")
 					return
 				}
 			}
-			c.cfg.Logger.Println("[done] connection closed by user!")
+			c.cfg.Logger.Println("INF [done] connection closed by user!")
 		}()
 		return ech
 	}())
@@ -223,19 +240,19 @@ func (c *Connector) initChannel() error {
 			}
 
 			if e != nil {
-				c.cfg.Logger.Println("[recreate] got channel close with error:", e.Reason)
+				c.cfg.Logger.Println("ERR [recreate] got channel close with error:", e.Reason)
 			} else {
-				c.cfg.Logger.Println("[done] channel closed by user!")
+				c.cfg.Logger.Println("INF [done] channel closed by user!")
 			}
 
 			for {
 				err := c.initChannel()
 				if err != nil {
-					c.cfg.Logger.Println("[recreate] channel not recreated, will retry...")
+					c.cfg.Logger.Println("ERR [recreate] channel not recreated, will retry...", err)
 					time.Sleep(c.cfg.RetryEvery)
 					continue
 				}
-				c.cfg.Logger.Println("[recreate] channel successfully recreated!")
+				c.cfg.Logger.Println("INF [recreate] channel successfully recreated!")
 				return
 			}
 		}()
@@ -261,26 +278,10 @@ func (c *Connector) initChannel() error {
 	return nil
 }
 
-func NewConnector(cfg Config) *Connector {
-	if cfg.Logger == nil {
-		cfg.Logger = log.New(os.Stdout, "[amqp-safe]", 0)
-	}
-
-	if cfg.DialTimeout == 0 {
-		cfg.DialTimeout = 3 * time.Second
-	}
-
-	if cfg.HeartbeatEvery == 0 {
-		cfg.HeartbeatEvery = 3 * time.Second
-	}
-
-	if cfg.RetryEvery == 0 {
-		cfg.RetryEvery = 1 * time.Second
-	}
-
-	if len(cfg.Hosts) == 0 {
-		panic("no amqp hosts specified")
-	}
-
-	return &Connector{cfg: cfg, onReady: func() {}}
-}
+var (
+	ErrNoHosts      = errors.New("no amqp hosts specified")
+	ErrServerNAck   = errors.New("not ack by server")
+	ErrServerReturn = errors.New("returned by server")
+	ErrNoConnection = errors.New("not connected")
+	ErrNoChannel    = errors.New("no channel")
+)
